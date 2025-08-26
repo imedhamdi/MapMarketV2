@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     
     <style>
         * {
@@ -155,6 +158,20 @@
         .filters-btn:hover {
             transform: translateY(-50%) scale(1.05);
             box-shadow: 0 4px 15px rgba(9, 177, 186, 0.4);
+        }
+
+        .header-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .header-menu-btn:hover {
+            background: var(--gray-light);
         }
 
         .header-actions {
@@ -438,6 +455,12 @@
             overflow: hidden;
         }
 
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .product-favorite {
             position: absolute;
             top: 12px;
@@ -479,6 +502,19 @@
             font-weight: 500;
         }
 
+        .product-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--secondary);
+            color: var(--white);
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
         .product-info {
             padding: 16px;
         }
@@ -488,6 +524,29 @@
             font-weight: 700;
             color: var(--dark);
             margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .product-price-old {
+            text-decoration: line-through;
+            color: var(--gray);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 12px;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+
+        .product-rating i {
+            color: var(--secondary);
         }
 
         .product-title {
@@ -1660,19 +1719,40 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 768px) {
+        @media (max-width: 767px) {
             .main-content {
                 margin-bottom: 100px;
             }
-            
+
             .search-container {
-                margin: 0 12px;
+                display: none;
             }
-            
-            .header-actions {
-                gap: 8px;
+
+            .header-menu-btn {
+                display: flex;
+                align-items: center;
             }
-            
+
+            #main-menu {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 70%;
+                height: 100%;
+                background: var(--white);
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 80px 20px;
+                gap: 24px;
+                transition: right 0.3s ease;
+                box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+                z-index: 1200;
+            }
+
+            #main-menu.open {
+                right: 0;
+            }
+
             .sell-btn {
                 display: none;
             }
@@ -1691,10 +1771,10 @@
             }
 
             .auth-modal-content {
-                margin: 16px;
-                max-width: calc(100vw - 32px);
-                border-radius: 16px;
-                max-height: 90vh;
+                margin: 0;
+                max-width: 100vw;
+                border-radius: 0;
+                max-height: 100vh;
             }
 
             .auth-form {
@@ -1734,7 +1814,7 @@
             }
 
             .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                grid-template-columns: 1fr;
                 gap: 16px;
             }
 
@@ -1757,7 +1837,19 @@
             }
         }
 
-        @media (min-width: 769px) {
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (min-width: 768px) {
             .bottom-nav {
                 display: none;
             }
@@ -1806,8 +1898,12 @@
                     <i class="fas fa-filter"></i>
                 </button>
             </div>
-            
-            <div class="header-actions">
+
+            <button class="header-menu-btn" id="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="header-actions" id="main-menu">
                 <button class="header-btn" id="messages-btn">
                     <i class="fas fa-envelope"></i>
                     <span class="notification-badge">2</span>
@@ -1853,15 +1949,26 @@
                     <!-- Product Cards -->
                     <div class="product-card" data-product="1">
                         <div class="product-image">
-                            👗
+                            <img src="https://images.unsplash.com/photo-1520971346730-4e5b94ab12d9?auto=format&fit=crop&w=400&q=80" alt="Robe d'été fleurie Zara" loading="lazy">
+                            <span class="product-badge">Nouveau</span>
                             <div class="product-favorite">
                                 <i class="far fa-heart"></i>
                             </div>
                             <div class="product-distance">1.2 km</div>
                         </div>
                         <div class="product-info">
-                            <div class="product-price">25,00 €</div>
+                            <div class="product-price">
+                                <span class="price-current">25,00 €</span>
+                                <span class="product-price-old">30,00 €</span>
+                            </div>
                             <div class="product-title">Robe d'été fleurie Zara</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
                             <div class="product-location">
                                 <i class="fas fa-map-marker-alt"></i>
                                 Paris 11e
@@ -1871,7 +1978,7 @@
 
                     <div class="product-card" data-product="2">
                         <div class="product-image">
-                            📱
+                            <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80" alt="iPhone 14 Pro Max 256Go" loading="lazy">
                             <div class="product-favorite">
                                 <i class="far fa-heart"></i>
                             </div>
@@ -1880,6 +1987,13 @@
                         <div class="product-info">
                             <div class="product-price">450,00 €</div>
                             <div class="product-title">iPhone 14 Pro Max 256Go</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
                             <div class="product-location">
                                 <i class="fas fa-map-marker-alt"></i>
                                 Paris 10e
@@ -1889,7 +2003,7 @@
 
                     <div class="product-card" data-product="3">
                         <div class="product-image">
-                            🚲
+                            <img src="https://images.unsplash.com/photo-1525107419376-7f80b67db09d?auto=format&fit=crop&w=400&q=80" alt="Vélo électrique Decathlon" loading="lazy">
                             <div class="product-favorite active">
                                 <i class="fas fa-heart"></i>
                             </div>
@@ -1898,6 +2012,13 @@
                         <div class="product-info">
                             <div class="product-price">180,00 €</div>
                             <div class="product-title">Vélo électrique Decathlon</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
                             <div class="product-location">
                                 <i class="fas fa-map-marker-alt"></i>
                                 Paris 11e
@@ -1907,7 +2028,7 @@
 
                     <div class="product-card" data-product="4">
                         <div class="product-image">
-                            👜
+                            <img src="https://images.unsplash.com/photo-1526178618353-548fe93a9693?auto=format&fit=crop&w=400&q=80" alt="Sac à main cuir marron" loading="lazy">
                             <div class="product-favorite">
                                 <i class="far fa-heart"></i>
                             </div>
@@ -1916,6 +2037,13 @@
                         <div class="product-info">
                             <div class="product-price">85,00 €</div>
                             <div class="product-title">Sac à main cuir marron</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
                             <div class="product-location">
                                 <i class="fas fa-map-marker-alt"></i>
                                 Paris 3e
@@ -1925,7 +2053,7 @@
 
                     <div class="product-card" data-product="5">
                         <div class="product-image">
-                            🎮
+                            <img src="https://images.unsplash.com/photo-1606813902806-0d469633bd2b?auto=format&fit=crop&w=400&q=80" alt="PlayStation 5 + 2 manettes" loading="lazy">
                             <div class="product-favorite">
                                 <i class="far fa-heart"></i>
                             </div>
@@ -1934,6 +2062,13 @@
                         <div class="product-info">
                             <div class="product-price">320,00 €</div>
                             <div class="product-title">PlayStation 5 + 2 manettes</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
                             <div class="product-location">
                                 <i class="fas fa-map-marker-alt"></i>
                                 Paris 4e
@@ -1943,7 +2078,7 @@
 
                     <div class="product-card" data-product="6">
                         <div class="product-image">
-                            👕
+                            <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=400&q=80" alt="T-shirt vintage Supreme" loading="lazy">
                             <div class="product-favorite">
                                 <i class="far fa-heart"></i>
                             </div>
@@ -1952,6 +2087,13 @@
                         <div class="product-info">
                             <div class="product-price">35,00 €</div>
                             <div class="product-title">T-shirt vintage Supreme</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
                             <div class="product-location">
                                 <i class="fas fa-map-marker-alt"></i>
                                 Paris 2e
@@ -2480,6 +2622,7 @@
                 this.setupEventListeners();
                 this.initializeMap();
                 this.loadUserData();
+                this.showOnboarding();
             }
 
             loadUserData() {
@@ -2489,6 +2632,13 @@
                     this.currentUser = JSON.parse(userData);
                     this.isAuthenticated = true;
                     this.updateProfileAvatar();
+                }
+            }
+
+            showOnboarding() {
+                if (!localStorage.getItem('mapmarket_onboarded')) {
+                    this.showNotification('Bienvenue sur MapMarket !');
+                    localStorage.setItem('mapmarket_onboarded', '1');
                 }
             }
 
@@ -2511,6 +2661,15 @@
                         header.classList.remove('scrolled');
                     }
                 });
+
+                // Mobile menu toggle
+                const menuToggle = document.getElementById('mobile-menu-toggle');
+                const mainMenu = document.getElementById('main-menu');
+                if (menuToggle && mainMenu) {
+                    menuToggle.addEventListener('click', () => {
+                        mainMenu.classList.toggle('open');
+                    });
+                }
 
                 // View toggle
                 document.querySelectorAll('.bottom-nav-item[data-view]').forEach(btn => {
@@ -2806,7 +2965,7 @@
 
                     // Add sample markers
                     const locations = [
-                        { 
+                        {
                             lat: 48.8566, lng: 2.3522, 
                             title: 'Robe d\'été fleurie Zara', 
                             price: '25,00 €', 
@@ -2858,6 +3017,7 @@
                         }
                     ];
 
+                    const markerCluster = L.markerClusterGroup();
                     locations.forEach((location, index) => {
                         const customIcon = L.divIcon({
                             html: `<div class="custom-marker">${location.emoji}</div>`,
@@ -2866,8 +3026,8 @@
                             iconAnchor: [22, 22]
                         });
 
-                        const marker = L.marker([location.lat, location.lng], { icon: customIcon }).addTo(this.map);
-                        
+                        const marker = L.marker([location.lat, location.lng], { icon: customIcon });
+
                         const popupContent = `
                             <div class="marker-popup">
                                 <div class="marker-popup-image">${location.emoji}</div>
@@ -2878,10 +3038,12 @@
                                 </button>
                             </div>
                         `;
-                        
+
                         marker.bindPopup(popupContent);
+                        markerCluster.addLayer(marker);
                         this.markers.push({ marker, data: location });
                     });
+                    this.map.addLayer(markerCluster);
                 }, 500);
             }
 
